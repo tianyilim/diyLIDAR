@@ -1,4 +1,4 @@
-#include <Arduino.h>
+#include <Arduino.h>  // for PlatformIO/VSCode
 
 // This is the highest-level sketch.
 // Handles Serial communication.
