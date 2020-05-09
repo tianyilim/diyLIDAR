@@ -19,6 +19,20 @@ Configure IMU
 #include "Wire.h"     // I2C
 #include "VL53L0X.h"  // TOF sensors
 #include "MPU9250.h"  // IMU
+#include "28BYJ-48.h" // Stepper
+
+// DEFINES
+#define HANDSHAKE c  // Arbitrary handshake bytes.
+
+#define LOX1_ADDRESS 0x31 // address we will assign if dual sensor is present
+#define LOX2_ADDRESS 0x41
+#define SHT_LOX1 4  // set the pins to shutdown
+#define SHT_LOX2 5
+
+#define STEPPER_PIN1 9
+#define STEPPER_PIN2 10
+#define STEPPER_PIN3 11
+#define STEPPER_PIN4 12
 
 // VARS
 bool stop = false;  // Check if handshake/stop has been set.
@@ -32,13 +46,8 @@ int imuStatus;
 float imuData[10];           // Array for IMU data.
 /* XYZ: Accel, Gyro, Mag; TEMP. */
 
-// DEFINES
-#define HANDSHAKE c  // Arbitrary handshake bytes.
-
-#define LOX1_ADDRESS 0x31 // address we will assign if dual sensor is present
-#define LOX2_ADDRESS 0x41
-#define SHT_LOX1 4  // set the pins to shutdown
-#define SHT_LOX2 5
+Stepper_28BYJ stepper(STEPPER_PIN1, STEPPER_PIN2, STEPPER_PIN3, STEPPER_PIN4);
+// New stepper motor
 
 // FUNCTION PROTOTYPES
 void parseCommand();  // Parse Serial commands
@@ -66,6 +75,23 @@ void setup() {
   Start spinning up stepper motor
   */
 
+  // Start spinning up stepper motor
+  stepper.attach(255);  // Speed can be adjusted later...
+  stepper.setAngle(2038); // Can be adjusted later...
+
+  // TEST Stepper motor:
+  // Serial.println("turning 30 deg");
+  // stepper.turnDegrees(30);
+  
+  // // Invert direction...
+  // stepper.setDirection( !stepper.getDirection() );
+
+  // Serial.println("turning 500 steps");
+  // stepper.turnSteps(500);
+  // delay(1000);
+
+  stepper.turn();
+
   // Setup TOF 1 and 2
   if(setID() < 0) {
     while(1);
@@ -78,7 +104,6 @@ void setup() {
     Serial.println(imuStatus);
     while(1);
   }
-
   // Send message for successful initialization.
   Serial.println("Successfully initialised LIDAR module.");
 }
@@ -119,6 +144,10 @@ void loop() {
   printData();
 
   delay(1000);
+
+  // Evaluate stopping and starting turning...
+  // Invert direction...
+  // stepper.setDirection( !stepper.getDirection() );
 
 }
 
@@ -247,4 +276,22 @@ void printData(){
 
   Serial.print("Temp: ");
   Serial.println(imuData[9] ,3);
+
+  Serial.print("Stepper speed: ");
+  Serial.print(stepper.getSpeed());
+  Serial.print(" Stepper steps for 360deg: ");
+  Serial.print(stepper.getAngle());
+  Serial.print(" Stepper direction: ");
+  Serial.println(stepper.getDirection());
+
+  Serial.println();
+}
+
+// Timer interrupt
+ISR(TIMER1_COMPA_vect){
+	// How to set it up in a class?
+	if(stepper.turnnow){
+    stepper.oneStep();
+    stepper.counter++;
+  }
 }
