@@ -7,13 +7,12 @@ private:
 	uint8_t speed = 100;	// Something related to speed.
 	int angle = 360;		// Number of steps to make a 360 degree motion of the motor
 	bool dir = true;		// What direction to turn?
-	uint8_t step_number = 0; // for onestep
+	int8_t step_number = 0; // for onestep
+	volatile unsigned int counter = 0; // Counter to count up for exact stepping
 
 public:
 	bool turnnow;	// Something to ensure that next step happens when timer interrupt
-	volatile unsigned int counter = 0; // Counter to count up for exact stepping
-
-
+	
 	Stepper_28BYJ(int _pin1, int _pin2, int _pin3, int _pin4);
 
 	void attach(uint8_t _speed);

@@ -15,12 +15,14 @@ Additionally, we use a TCRT-5000 IR sensor to provide negative feedback on disc 
 DONE:
 1. Framework for recieving relevant data from TOF and IMU sensors.
 2. Basic code to make stepper motor spin, and to control speed and direction of stepper motor.
+3. Stepper motor precise step / angle control. Fixed by:
+    1. Making a class volatile variable
+    2. Make class function modify that variable.
 
 TODO:
-1. Stepper motor precise step / angle control
-2. A way to call the timer ISR within the stepper object (?)
-3. Attach external interrupt for the light sensor
-4. Proper serial control methods for the entire system
-5. Calibrate the IMU (within reason)
-6. Cleanup the README.
-7. Test external control with a Raspberry Pi.
+1. A way to call the timer ISR within the stepper object (?)
+2. Attach external interrupt for the light sensor
+3. Proper serial control methods for the entire system
+4. Calibrate the IMU (within reason)
+5. Cleanup the README.
+6. Test external control with a Raspberry Pi.

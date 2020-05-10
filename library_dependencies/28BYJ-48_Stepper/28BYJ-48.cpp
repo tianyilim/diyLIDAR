@@ -26,90 +26,52 @@ void Stepper_28BYJ::attach(uint8_t _speed){
 	pinMode(pin3, OUTPUT);
 	pinMode(pin4, OUTPUT);
 
-	speed = _speed;
-
-	uint16_t interval;
-
-	interval = (uint16_t)(-5.6392*(float)speed + 1562);
-
-	cli(); // Stop interrupts
-  
-	//set timer1 interrupt
-	TCCR1A = 0;// set entire TCCR1A register to 0
-	TCCR1B = 0;// same for TCCR1B
-	TCNT1  = 0;//initialize counter value to 0
-	// set compare match register for 1hz increments
-	OCR1A = interval;	// = (16*10^6) / (<DESIRED FREQUENCY>*1024) - 1 (must be <65536)
-	// turn on CTC mode
-	TCCR1B |= (1 << WGM12);
-	// Set CS10 and CS12 bits for 1024 prescaler
-	TCCR1B |= (1 << CS12) | (1 << CS10);  
-	// enable timer compare interrupt
-	TIMSK1 |= (1 << OCIE1A);
-
-	sei();  // Enable interrupts
+	setSpeed(_speed);
 }
 
 // Steps the motor once.
 void Stepper_28BYJ::oneStep(){
+	
+	switch(step_number){
+		case 0:
+		digitalWrite(pin1, HIGH);
+		digitalWrite(pin2, LOW);
+		digitalWrite(pin3, LOW);
+		digitalWrite(pin4, LOW);
+		break;
+		case 1:
+		digitalWrite(pin1, LOW);
+		digitalWrite(pin2, HIGH);
+		digitalWrite(pin3, LOW);
+		digitalWrite(pin4, LOW);
+		break;
+		case 2:
+		digitalWrite(pin1, LOW);
+		digitalWrite(pin2, LOW);
+		digitalWrite(pin3, HIGH);
+		digitalWrite(pin4, LOW);
+		break;
+		case 3:
+		digitalWrite(pin1, LOW);
+		digitalWrite(pin2, LOW);
+		digitalWrite(pin3, LOW);
+		digitalWrite(pin4, HIGH);
+		break;
+	} 
+
 	if(dir){
-      switch(step_number){
-        case 0:
-        digitalWrite(pin1, HIGH);
-        digitalWrite(pin2, LOW);
-        digitalWrite(pin3, LOW);
-        digitalWrite(pin4, LOW);
-        break;
-        case 1:
-        digitalWrite(pin1, LOW);
-        digitalWrite(pin2, HIGH);
-        digitalWrite(pin3, LOW);
-        digitalWrite(pin4, LOW);
-        break;
-        case 2:
-        digitalWrite(pin1, LOW);
-        digitalWrite(pin2, LOW);
-        digitalWrite(pin3, HIGH);
-        digitalWrite(pin4, LOW);
-        break;
-        case 3:
-        digitalWrite(pin1, LOW);
-        digitalWrite(pin2, LOW);
-        digitalWrite(pin3, LOW);
-        digitalWrite(pin4, HIGH);
-        break;
-      } 
-    } else {
-        switch(step_number){
-          case 0:
-          digitalWrite(pin1, LOW);
-          digitalWrite(pin2, LOW);
-          digitalWrite(pin3, LOW);
-          digitalWrite(pin4, HIGH);
-          break;
-          case 1:
-          digitalWrite(pin1, LOW);
-          digitalWrite(pin2, LOW);
-          digitalWrite(pin3, HIGH);
-          digitalWrite(pin4, LOW);
-          break;
-          case 2:
-          digitalWrite(pin1, LOW);
-          digitalWrite(pin2, HIGH);
-          digitalWrite(pin3, LOW);
-          digitalWrite(pin4, LOW);
-          break;
-          case 3:
-          digitalWrite(pin1, HIGH);
-          digitalWrite(pin2, LOW);
-          digitalWrite(pin3, LOW);
-          digitalWrite(pin4, LOW);
-      } 
-    }
-    step_number++;
-    if(step_number > 3){
-      step_number = 0;
-    }
+		step_number++;
+    	if(step_number > 3){
+      		step_number = 0;
+		}
+	} else {
+		step_number--;
+		if(step_number < 0){
+			step_number = 3;
+		}
+	}
+
+	counter++;
 }
 
 // Turns indefinitely at the preset speed. Overload for using default direction.
@@ -146,12 +108,15 @@ void Stepper_28BYJ::stop(){
 
 // Turns the motor for the exact number of steps
 void Stepper_28BYJ::turnSteps(unsigned int steps){
-	counter = 0;
+	this->counter = 0;
+	turn();
 
-	while(counter <= steps){
-		turn();
+	while(this->counter < steps){
+		if (this->counter >= steps){
+			stop();
+			return;
+		}
 	}
-	stop();
 }
 
 // Turns the motor for the exact number of steps
@@ -161,16 +126,14 @@ void Stepper_28BYJ::turnSteps(bool _dir, unsigned int steps){
 }
 
 // Turns the motor for specific number of degrees
-void Stepper_28BYJ::turnDegrees(int turnAngle){
-	counter = 0;
-	unsigned int steps = turnAngle * angle;
-	steps /= 360;
-	
-	while(counter <= steps){
-		turn();
-	}
+void Stepper_28BYJ::turnDegrees(int turnAngle){	
 
-	stop();
+	// SCREW floating point calcs in C++...
+	double intermediate = (double)angle / 360.0f;
+	intermediate *= turnAngle;
+	uint32_t steps = (uint32_t) intermediate;
+
+	turnSteps(steps);
 }
 
 // Turns the motor for specific number of degrees
@@ -186,7 +149,9 @@ void Stepper_28BYJ::setSpeed(uint8_t _speed){
 
 	uint16_t interval;
 
-	interval = (uint16_t)(-5.6392*(float)speed + 1562);
+	// Tune the coeff of speed as desired...
+	// 6.0 is pretty darn fast.
+	interval = (uint16_t)(-6.0*(float)speed + 1562);
 
 	cli(); // Stop interrupts
   

@@ -34,6 +34,8 @@ Configure IMU
 #define STEPPER_PIN3 11
 #define STEPPER_PIN4 12
 
+#define STEPS_FOR_360 2048
+
 // VARS
 bool stop = false;  // Check if handshake/stop has been set.
 uint8_t dataIn[2];  // Store incoming serial data
@@ -77,19 +79,22 @@ void setup() {
 
   // Start spinning up stepper motor
   stepper.attach(255);  // Speed can be adjusted later...
-  stepper.setAngle(2038); // Can be adjusted later...
+  stepper.setAngle(STEPS_FOR_360); // Can be adjusted later...
 
   // TEST Stepper motor:
   // Serial.println("turning 30 deg");
   // stepper.turnDegrees(30);
+  // Serial.println("Turned degrees!");
   
   // // Invert direction...
+  // delay(500);
   // stepper.setDirection( !stepper.getDirection() );
 
-  // Serial.println("turning 500 steps");
-  // stepper.turnSteps(500);
-  // delay(1000);
+  // Serial.println("turning 200 steps");
+  // stepper.turnSteps(200);
+  // delay(500);
 
+  // stepper.setDirection( !stepper.getDirection() );
   stepper.turn();
 
   // Setup TOF 1 and 2
@@ -292,6 +297,5 @@ ISR(TIMER1_COMPA_vect){
 	// How to set it up in a class?
 	if(stepper.turnnow){
     stepper.oneStep();
-    stepper.counter++;
   }
 }
