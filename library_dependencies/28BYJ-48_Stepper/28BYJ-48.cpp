@@ -20,14 +20,30 @@ Stepper_28BYJ::Stepper_28BYJ(int _pin1, int _pin2, int _pin3, int _pin4){
 }
 
 // Attaches timer interrupt and initializes pins
-void Stepper_28BYJ::attach(uint8_t _speed){
+void Stepper_28BYJ::attach(){
 	pinMode(pin1, OUTPUT);
 	pinMode(pin2, OUTPUT);
 	pinMode(pin3, OUTPUT);
 	pinMode(pin4, OUTPUT);
+}
+
+// Spools up the stepper motor
+void Stepper_28BYJ::spool(uint8_t _speed){
+	uint8_t spoolSteps = _speed / SPOOL_INCR;  // Increment speed in increments of 20.
+	uint8_t acc = SPOOL_INCR;
+
+	turn();
+
+	for (int i=0; i < spoolSteps; i++) {
+		setSpeed(acc);
+		acc += SPOOL_INCR;
+		
+		delay(SPOOL_DELAY);
+	}
 
 	setSpeed(_speed);
 }
+
 
 // Steps the motor once.
 void Stepper_28BYJ::oneStep(){
@@ -150,7 +166,7 @@ void Stepper_28BYJ::setSpeed(uint8_t _speed){
 	uint16_t interval;
 
 	// Tune the coeff of speed as desired...
-	// 6.0 is pretty darn fast.
+	// 6.0 is darn fast. (and is the limit of reason)
 	interval = (uint16_t)(-6.0*(float)speed + 1562);
 
 	cli(); // Stop interrupts

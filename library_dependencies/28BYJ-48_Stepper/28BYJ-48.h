@@ -1,6 +1,10 @@
 #ifndef Stepper_28BYJ_H
 #define Stepper_28BYJ_H
 
+// Defines for spooling the motor up.
+#define SPOOL_INCR 20
+#define SPOOL_DELAY 100
+
 class Stepper_28BYJ {
 private:
 	int pin1, pin2, pin3, pin4;
@@ -12,10 +16,11 @@ private:
 
 public:
 	bool turnnow;	// Something to ensure that next step happens when timer interrupt
-	
+
 	Stepper_28BYJ(int _pin1, int _pin2, int _pin3, int _pin4);
 
-	void attach(uint8_t _speed);
+	void attach();
+	void spool(uint8_t _speed);
 
 	void oneStep();
 	

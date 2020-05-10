@@ -36,12 +36,14 @@ Configure IMU
 
 #define STEPS_FOR_360 2048
 
+#define LIGHT_SENSE 3 // pin for light sensor interrupt.
+
 // VARS
 bool stop = false;  // Check if handshake/stop has been set.
 uint8_t dataIn[2];  // Store incoming serial data
 
 VL53L0X sensor1, sensor2;   // TOF sensor objects
-unsigned int distance[2];   // Distance reading from each sensor.
+uint16_t distance[2];   // Distance reading from each sensor.
 
 MPU9250 IMU(Wire, 0x68);    // Address for grounded AD0 pin. FSYNC is also grounded!
 int imuStatus;
@@ -51,17 +53,22 @@ float imuData[10];           // Array for IMU data.
 Stepper_28BYJ stepper(STEPPER_PIN1, STEPPER_PIN2, STEPPER_PIN3, STEPPER_PIN4);
 // New stepper motor
 
+volatile bool blink;
+// TEST for hardware interrupt
+
 // FUNCTION PROTOTYPES
 void parseCommand();  // Parse Serial commands
 int setID();          // Setup TOF sensors
-void readTOF();   // Reads TOF sensors, updates distance. 0xFFFF means timeout.
-void readIMU();   // Read IMU sensors.
+void readTOF();       // Reads TOF sensors, updates distance. 0xFFFF means timeout.
+void readIMU();       // Read IMU sensors.
+void lightTrigger();  // interrupt that triggers when light sensor detects something.
 
 void printData(); // Serial-prints out data in (human readable) form.
 
 void setup() {
   Serial.begin(115200);
   while(!Serial);
+  pinMode(LED_BUILTIN, OUTPUT);
 
   // Set both shutdown pins LOW... 
   pinMode(SHT_LOX1, OUTPUT);
@@ -70,15 +77,10 @@ void setup() {
   // Send startup message
   Serial.println("Starting up LIDAR module.");
 
-  // Error codes for failure to init each sensor (IMU, TOF1, TOF2)
-  /*
-  Initialise IMU
-  Initialise TOF1, TOF2
-  Start spinning up stepper motor
-  */
-
   // Start spinning up stepper motor
-  stepper.attach(255);  // Speed can be adjusted later...
+
+  stepper.attach();
+  stepper.spool(255);              // Spools up stepper speed to max.
   stepper.setAngle(STEPS_FOR_360); // Can be adjusted later...
 
   // TEST Stepper motor:
@@ -95,7 +97,6 @@ void setup() {
   // delay(500);
 
   // stepper.setDirection( !stepper.getDirection() );
-  stepper.turn();
 
   // Setup TOF 1 and 2
   if(setID() < 0) {
@@ -109,6 +110,11 @@ void setup() {
     Serial.println(imuStatus);
     while(1);
   }
+
+  
+  // Attaches HW interrupt for light sensor.
+  attachInterrupt(digitalPinToInterrupt(LIGHT_SENSE), lightTrigger, RISING);
+  
   // Send message for successful initialization.
   Serial.println("Successfully initialised LIDAR module.");
 }
@@ -122,6 +128,7 @@ void loop() {
       
       if(dataIn[0] == 'c'){
         stop = true;
+        interrupts();
         break;
       }
     } 
@@ -290,6 +297,13 @@ void printData(){
   Serial.println(stepper.getDirection());
 
   Serial.println();
+}
+
+void lightTrigger(){
+  // For now, toggle PIN 13 on and off.
+  // In the future, reset some cool stuff.
+  blink = !blink;
+  digitalWrite(LED_BUILTIN, blink);
 }
 
 // Timer interrupt
