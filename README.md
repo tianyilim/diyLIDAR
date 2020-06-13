@@ -34,9 +34,10 @@ DONE:
 4. Attach external interrupt for the light sensor
 
 TODO:
-1. A way to call the timer ISR within the stepper object (?)
+1. A way to call the timer ISR within the stepper object (?) - Not really required, there is only one stepper object.
 2. Proper serial control methods for the entire system
 3. Calibrate the IMU (within reason)
-4. Proper behaviour for calibrating steps/angle with the TCRT sensor; negative feedback.
+4. Proper behaviour for calibrating steps/angle with the TCRT sensor; so we know the current angle that is being measured.
 4. Test external control with a Raspberry Pi.
 5. Cleanup the README.
+6. Test the hardware, but I think I would prefer if a PCB can be done up instead of the perf board arrangment. The packaging is tight.
